@@ -27,6 +27,8 @@ const TEMPLATES_DIR: &str = "templates";
 const STATIC_DIR: &str = "static";
 const OUTPUT_DIR: &str = "dist";
 
+// -------- MAIN --------
+
 fn main() {
     let serve = std::env::args().skip(1).any(|arg| arg == "serve");
 
@@ -58,52 +60,16 @@ fn build() {
     let year = chrono::Local::now().year();
 
     // Home / about page
-    let (front, content) = render_markdown(Path::new(CONTENT_DIR).join("about.md"));
-    let mut ctx = Context::new();
-    ctx.insert("title", &front.title);
-    ctx.insert("description", &front.description);
-    ctx.insert("content", &content);
-    ctx.insert("base_path", &base_path);
-    ctx.insert("year", &year);
-    write_page(&tera, "index.html", &ctx, &output.join("index.html"));
+    create_basic_page_from_markdown(&tera, year, "about.md", "index.html", &base_path, output);
 
     // Links page
-    let (front, content) = render_markdown(Path::new(CONTENT_DIR).join("links.md"));
-    let mut ctx = Context::new();
-    ctx.insert("title", &front.title);
-    ctx.insert("description", &front.description);
-    ctx.insert("content", &content);
-    ctx.insert("base_path", &base_path);
-    ctx.insert("year", &year);
     let links_dir = output.join("links");
     fs::create_dir_all(&links_dir).expect("failed to create links directory");
-    write_page(&tera, "links.html", &ctx, &links_dir.join("index.html"));
+    create_basic_page_from_markdown(&tera, year, "links.md", "links.html", &base_path, &links_dir);
 
     // Blog posts
-    let mut posts = load_posts(Path::new(CONTENT_DIR).join("blog"));
-    posts.sort_by(|a, b| b.date.cmp(&a.date));
-
-    let blog_dir = output.join("blog");
-    fs::create_dir_all(&blog_dir).expect("failed to create blog directory");
-
-    let mut ctx = Context::new();
-    ctx.insert("posts", &posts);
-    ctx.insert("base_path", &base_path);
-    ctx.insert("year", &year);
-    write_page(&tera, "blog_index.html", &ctx, &blog_dir.join("index.html"));
-
-    for post in &posts {
-        let post_dir = blog_dir.join(&post.slug);
-        fs::create_dir_all(&post_dir).expect("failed to create post directory");
-
-        let mut ctx = Context::new();
-        ctx.insert("post", post);
-        ctx.insert("base_path", &base_path);
-        ctx.insert("year", &year);
-        write_page(&tera, "blog_post.html", &ctx, &post_dir.join("index.html"));
-    }
-
-    println!("Built site into ./{OUTPUT_DIR} ({} blog posts)", posts.len());
+    let blog_posts_count = create_blog_page_from_markdown(&tera, year, &base_path, &output);
+    println!("Built site into ./{OUTPUT_DIR} ({} blog posts)", blog_posts_count);
 }
 
 /// Serves the static files under `root` over HTTP until the process is killed.
@@ -146,6 +112,9 @@ fn serve_dir(root: &Path, addr: &str) {
     }
 }
 
+
+// -------- HELPERS --------
+
 fn content_type_for(path: &Path) -> &'static str {
     match path.extension().and_then(|e| e.to_str()) {
         Some("html") => "text/html; charset=utf-8",
@@ -163,6 +132,47 @@ fn content_type_for(path: &Path) -> &'static str {
         Some("txt") => "text/plain; charset=utf-8",
         _ => "application/octet-stream",
     }
+}
+
+/// Loads the markdown file at `markdown_filename` under `content`, renders it to HTML, and writes it to `output/index.html`.
+fn create_basic_page_from_markdown(tera: &Tera, year: i32, markdown_filename: &str, template_filename: &str, base_path: &str, output: &Path) {
+    let (front, html_content) = render_markdown(Path::new(CONTENT_DIR).join(markdown_filename));
+    let mut ctx = Context::new();
+    ctx.insert("title", &front.title);
+    ctx.insert("description", &front.description);
+    ctx.insert("content", &html_content);
+    ctx.insert("base_path", base_path);
+    ctx.insert("year", &year);
+    write_page(tera, template_filename, &ctx, &output.join("index.html"));
+}
+
+/// Loads all the MD files in `content/blog`, renders them to HTML, and writes them to `output/blog`,
+/// returning the number of blog posts processed
+fn create_blog_page_from_markdown(tera: &Tera, year: i32, base_path: &str, output: &Path) -> usize {
+    let mut posts = load_posts(Path::new(CONTENT_DIR).join("blog"));
+    posts.sort_by(|a, b| b.date.cmp(&a.date));
+
+    let blog_dir = output.join("blog");
+    fs::create_dir_all(&blog_dir).expect("failed to create blog directory");
+
+    let mut ctx = Context::new();
+    ctx.insert("posts", &posts);
+    ctx.insert("base_path", base_path);
+    ctx.insert("year", &year);
+    write_page(tera, "blog_index.html", &ctx, &blog_dir.join("index.html"));
+
+    for post in &posts {
+        let post_dir = blog_dir.join(&post.slug);
+        fs::create_dir_all(&post_dir).expect("failed to create post directory");
+
+        let mut ctx = Context::new();
+        ctx.insert("post", post);
+        ctx.insert("base_path", &base_path);
+        ctx.insert("year", &year);
+        write_page(&tera, "blog_post.html", &ctx, &post_dir.join("index.html"));
+    }
+
+    posts.len()
 }
 
 fn write_page(tera: &Tera, template: &str, ctx: &Context, dest: &Path) {
