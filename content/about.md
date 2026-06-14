@@ -2,20 +2,24 @@
 title = "Ryan Drew"
 +++
 
-## Hi, I'm Ryan 👋
+## Ryan Drew
 
-I'm a software engineer who enjoys building things, breaking things, and
-occasionally writing about both. This site is my little corner of the
-internet — built from scratch with a static site generator I wrote in Rust.
+Senior software engineer at Meta working on content
+tooling (composers, content quality recommendations, organic
+a/b testing, etc). I love learning, music, baseball, Old School RuneScape
+and more.
 
-### What I do
+This website was made with a custom static site generator I made in Rust using Claude,
+as an experiment and to improve my skills (it's becoming all but mandatory at work.) I
+do promise that all the language on the pages here is my own.
 
-I work on software systems and enjoy diving into new tools, languages, and
-ideas. This site doubles as a sandbox for experimenting with Rust.
+Feel free to reach out about anything at my [email](mailto:ryan.drew14@gmail.com).
 
-### What you'll find here
+# Working On
+- osrs tooling (example: [WikiSync/HiScores MCP](https://github.com/ryandrew14/osrs-wikisync-mcp) that I plan to deploy for public use)
+- getting zombie axes for my group ironman
+- fixing all the spark generators in Mina the Hollower
 
-- **[Blog](/blog/)** — notes, write-ups, and things I've learned
-- **[Links](/links/)** — where to find me elsewhere
-
-Thanks for stopping by!
+# Listening To
+- [The Beatles - Revolver](https://www.youtube.com/watch?v=TN-Imp3N3dM)
+- [underscores - U](https://www.youtube.com/watch?v=yzwzkhNQcsM)
